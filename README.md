@@ -1,4 +1,4 @@
 # Tasks
 
-An extension to flows that queues long running tasks with amqp.
+An extension to flows that queues and handles long running tasks with amqp.
 
