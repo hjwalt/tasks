@@ -15,6 +15,7 @@ import (
 var NewProducer = runtime.ConstructorFor[*Producer, task.Producer](
 	func() *Producer {
 		return &Producer{
+			Name:         "tasks",
 			QueueDurable: true,
 		}
 	},
@@ -24,6 +25,13 @@ var NewProducer = runtime.ConstructorFor[*Producer, task.Producer](
 )
 
 // configuration
+func WithProducerName(name string) runtime.Configuration[*Producer] {
+	return func(p *Producer) *Producer {
+		p.Name = name
+		return p
+	}
+}
+
 func WithProducerConnectionString(connectionString string) runtime.Configuration[*Producer] {
 	return func(p *Producer) *Producer {
 		p.ConnectionString = connectionString
@@ -47,6 +55,7 @@ func WithProducerQueueDurable(durable bool) runtime.Configuration[*Producer] {
 
 // implementation
 type Producer struct {
+	Name             string
 	ConnectionString string // amqp://guest:guest@localhost:5672/
 	QueueName        string
 	QueueDurable     bool
@@ -57,7 +66,15 @@ type Producer struct {
 }
 
 func (p *Producer) Start() error {
-	if conn, err := amqp091.Dial(p.ConnectionString); err != nil {
+	config := amqp091.Config{
+		Heartbeat: 10 * time.Second,
+		Locale:    "en_US",
+		Properties: amqp091.Table{
+			"connection_name": p.Name,
+		},
+	}
+
+	if conn, err := amqp091.DialConfig(p.ConnectionString, config); err != nil {
 		return errors.Join(err, ErrRabbitConnection)
 	} else {
 		p.connection = conn

@@ -44,6 +44,7 @@ func (c ExecutorBunFlowConfiguration[OK, OV, T]) Register() {
 		runtime_bunrouter.WithRouterPort(c.HttpPort),
 	)
 	RegisterConsumerConfig(
+		runtime_rabbit.WithConsumerName(c.Name),
 		runtime_rabbit.WithConsumerQueueName(c.TaskChannel.Name()),
 		runtime_rabbit.WithConsumerConnectionString(c.TaskConnectionString),
 	)

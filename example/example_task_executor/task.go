@@ -30,7 +30,7 @@ func instance() runtime.Runtime {
 		Executor:                 fn,
 		OutputTopic:              flow.StringTopic("word-updated"),
 		OutputBroker:             "localhost:9092",
-		TaskConnectionString:     "amqp://guest:guest@localhost:5672/",
+		TaskConnectionString:     "amqp://rabbit:rabbit@localhost:5672/",
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 		HttpPort:                 8081,
 		RabbitConsumerConfiguration: []runtime.Configuration[*runtime_rabbit.Consumer]{

@@ -3,6 +3,7 @@ package runtime_rabbit
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
@@ -14,6 +15,7 @@ import (
 var NewConsumer = runtime.ConstructorFor[*Consumer, runtime.Runtime](
 	func() *Consumer {
 		return &Consumer{
+			Name:         "tasks",
 			QueueDurable: true,
 		}
 	},
@@ -23,6 +25,13 @@ var NewConsumer = runtime.ConstructorFor[*Consumer, runtime.Runtime](
 )
 
 // configuration
+func WithConsumerName(name string) runtime.Configuration[*Consumer] {
+	return func(c *Consumer) *Consumer {
+		c.Name = name
+		return c
+	}
+}
+
 func WithConsumerConnectionString(connectionString string) runtime.Configuration[*Consumer] {
 	return func(c *Consumer) *Consumer {
 		c.ConnectionString = connectionString
@@ -53,6 +62,7 @@ func WithConsumerHandler(handler task.Executor[structure.Bytes]) runtime.Configu
 
 // implementation
 type Consumer struct {
+	Name             string
 	ConnectionString string // amqp://guest:guest@localhost:5672/
 	QueueName        string
 	QueueDurable     bool
@@ -65,7 +75,15 @@ type Consumer struct {
 }
 
 func (r *Consumer) Start() error {
-	if conn, err := amqp091.Dial(r.ConnectionString); err != nil {
+	config := amqp091.Config{
+		Heartbeat: 10 * time.Second,
+		Locale:    "en_US",
+		Properties: amqp091.Table{
+			"connection_name": r.Name,
+		},
+	}
+
+	if conn, err := amqp091.DialConfig(r.ConnectionString, config); err != nil {
 		return errors.Join(err, ErrRabbitConnection)
 	} else {
 		r.connection = conn

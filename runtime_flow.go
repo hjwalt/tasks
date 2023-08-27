@@ -49,6 +49,7 @@ func (c FlowConfiguration[IK, IV, OK, OV, T]) Register() {
 		),
 	)
 	RegisterProducerConfig(
+		runtime_rabbit.WithProducerName(c.Name),
 		runtime_rabbit.WithProducerQueueName(c.TaskChannel.Name()),
 		runtime_rabbit.WithProducerConnectionString(c.TaskConnectionString),
 	)
