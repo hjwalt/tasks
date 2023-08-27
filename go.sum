@@ -53,8 +53,8 @@ github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9
 github.com/hashicorp/go-uuid v1.0.2/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/go-uuid v1.0.3 h1:2gKiV6YVmrJ1i2CKKa9obLvRieoRGviZFL26PcT/Co8=
 github.com/hashicorp/go-uuid v1.0.3/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
-github.com/hjwalt/flows v0.2.2 h1:Sp0Efwx8fk6/i4hLPmTRksV5NPb6SQ4nsn6cetIOeMw=
-github.com/hjwalt/flows v0.2.2/go.mod h1:kQkzBSkzXz7JyP5jJ2Gnz2UAEoFoXn874sCy3JzlY3g=
+github.com/hjwalt/flows v0.2.3 h1:6hGNqu40w9dVmMOxsB1267eyenYTrEjHqs3Dym+i7/I=
+github.com/hjwalt/flows v0.2.3/go.mod h1:kQkzBSkzXz7JyP5jJ2Gnz2UAEoFoXn874sCy3JzlY3g=
 github.com/hjwalt/runway v0.0.28 h1:Z5tEAp3ExHho4Dzxid7eDVSUcdzylA+2Mtb5LDsRH0E=
 github.com/hjwalt/runway v0.0.28/go.mod h1:ZBeLa11jUKmhS73WoEQeLv1D0wy96R0q9C2eDJmqj74=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=

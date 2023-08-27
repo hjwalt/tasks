@@ -37,7 +37,7 @@ func instance() runtime.Runtime {
 		InputBroker:          "localhost:9092",
 		OutputBroker:         "localhost:9092",
 		TaskConnectionString: "amqp://guest:guest@localhost:5672/",
-		HttpPort:             8081,
+		HttpPort:             8082,
 		RabbitProducerConfiguration: []runtime.Configuration[*runtime_rabbit.Producer]{
 			runtime_rabbit.WithProducerQueueDurable(false),
 		},
@@ -46,7 +46,7 @@ func instance() runtime.Runtime {
 }
 
 const (
-	Instance = "tasks-flow-remap"
+	Instance = "tasks-example-flow"
 )
 
 func Register(m flows.Main) {

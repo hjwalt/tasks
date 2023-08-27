@@ -4,18 +4,59 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
 	"github.com/hjwalt/tasks/task"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 )
 
+// constructor
+var NewConsumer = runtime.ConstructorFor[*Consumer, runtime.Runtime](
+	func() *Consumer {
+		return &Consumer{
+			QueueDurable: true,
+		}
+	},
+	func(hr *Consumer) runtime.Runtime {
+		return runtime.NewLoop(hr)
+	},
+)
+
+// configuration
+func WithConsumerConnectionString(connectionString string) runtime.Configuration[*Consumer] {
+	return func(c *Consumer) *Consumer {
+		c.ConnectionString = connectionString
+		return c
+	}
+}
+
+func WithConsumerQueueName(queueName string) runtime.Configuration[*Consumer] {
+	return func(p *Consumer) *Consumer {
+		p.QueueName = queueName
+		return p
+	}
+}
+
+func WithConsumerQueueDurable(durable bool) runtime.Configuration[*Consumer] {
+	return func(p *Consumer) *Consumer {
+		p.QueueDurable = durable
+		return p
+	}
+}
+
+func WithConsumerHandler(handler task.Executor[structure.Bytes]) runtime.Configuration[*Consumer] {
+	return func(c *Consumer) *Consumer {
+		c.Handler = handler
+		return c
+	}
+}
+
+// implementation
 type Consumer struct {
 	ConnectionString string // amqp://guest:guest@localhost:5672/
 	QueueName        string
 	QueueDurable     bool
-	Handler          task.HandlerFunction
+	Handler          task.Executor[structure.Bytes]
 
 	connection *amqp091.Connection
 	channel    *amqp091.Channel
@@ -74,8 +115,8 @@ func (r *Consumer) Stop() {
 
 func (r *Consumer) Loop(ctx context.Context, cancel context.CancelFunc) error {
 
-	m, closed := <-r.messages
-	if closed {
+	m, hasMore := <-r.messages
+	if !hasMore {
 		cancel()
 		return nil
 	}
@@ -86,12 +127,9 @@ func (r *Consumer) Loop(ctx context.Context, cancel context.CancelFunc) error {
 		Timestamp: m.Timestamp,
 	}
 
-	_, err := r.Handler(ctx, t)
-	if err != nil {
+	if err := r.Handler(ctx, t); err != nil {
 		return errors.Join(err, ErrRabbitConsume)
 	}
-
-	logger.Info("message", zap.String("body", string(m.Body)))
 
 	m.Ack(false)
 

@@ -11,6 +11,8 @@ import (
 	"github.com/hjwalt/tasks/task"
 )
 
+type FlowFunction[IK any, IV any, OK any, OV any, T any] func(context.Context, flow.Message[IK, IV]) (task.Message[T], flow.Message[OK, OV], error)
+
 // constructor
 func NewTaskFlow[IK any, IV any, OK any, OV any, T any](c ...runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]]) stateless.BatchFunction {
 	return runtime.ConstructorFor[*TaskFlow[IK, IV, OK, OV, T], stateless.BatchFunction](
@@ -24,44 +26,30 @@ func NewTaskFlow[IK any, IV any, OK any, OV any, T any](c ...runtime.Configurati
 }
 
 // configuration
-func WithFlowFunction[IK any, IV any, OK any, OV any, T any](flowFunction task.FlowFunction[IK, IV, OK, OV, T]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
+func WithFlowFunction[IK any, IV any, OK any, OV any, T any](flowFunction FlowFunction[IK, IV, OK, OV, T]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
 	return func(p *TaskFlow[IK, IV, OK, OV, T]) *TaskFlow[IK, IV, OK, OV, T] {
 		p.next = flowFunction
 		return p
 	}
 }
 
-func WithInputKeyFormat[IK any, IV any, OK any, OV any, T any](f format.Format[IK]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
+func WithInputTopic[IK any, IV any, OK any, OV any, T any](t flow.Topic[IK, IV]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
 	return func(p *TaskFlow[IK, IV, OK, OV, T]) *TaskFlow[IK, IV, OK, OV, T] {
-		p.ik = f
+		p.inputTopic = t
 		return p
 	}
 }
 
-func WithInputValueFormat[IK any, IV any, OK any, OV any, T any](f format.Format[IV]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
+func WithOutputTopic[IK any, IV any, OK any, OV any, T any](t flow.Topic[OK, OV]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
 	return func(p *TaskFlow[IK, IV, OK, OV, T]) *TaskFlow[IK, IV, OK, OV, T] {
-		p.iv = f
+		p.outputTopic = t
 		return p
 	}
 }
 
-func WithOutputKeyFormat[IK any, IV any, OK any, OV any, T any](f format.Format[OK]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
+func WithTaskChannel[IK any, IV any, OK any, OV any, T any](t task.Channel[T]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
 	return func(p *TaskFlow[IK, IV, OK, OV, T]) *TaskFlow[IK, IV, OK, OV, T] {
-		p.ok = f
-		return p
-	}
-}
-
-func WithOutputValueFormat[IK any, IV any, OK any, OV any, T any](f format.Format[OV]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
-	return func(p *TaskFlow[IK, IV, OK, OV, T]) *TaskFlow[IK, IV, OK, OV, T] {
-		p.ov = f
-		return p
-	}
-}
-
-func WithTaskValueFormat[IK any, IV any, OK any, OV any, T any](f format.Format[T]) runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]] {
-	return func(p *TaskFlow[IK, IV, OK, OV, T]) *TaskFlow[IK, IV, OK, OV, T] {
-		p.t = f
+		p.taskChannel = t
 		return p
 	}
 }
@@ -75,13 +63,11 @@ func WithProducer[IK any, IV any, OK any, OV any, T any](producer task.Producer)
 
 // implementation
 type TaskFlow[IK any, IV any, OK any, OV any, T any] struct {
-	next     task.FlowFunction[IK, IV, OK, OV, T]
-	ik       format.Format[IK]
-	iv       format.Format[IV]
-	ok       format.Format[OK]
-	ov       format.Format[OV]
-	t        format.Format[T]
-	producer task.Producer
+	next        FlowFunction[IK, IV, OK, OV, T]
+	inputTopic  flow.Topic[IK, IV]
+	outputTopic flow.Topic[OK, OV]
+	taskChannel task.Channel[T]
+	producer    task.Producer
 }
 
 func (r *TaskFlow[IK, IV, OK, OV, T]) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
@@ -89,7 +75,7 @@ func (r *TaskFlow[IK, IV, OK, OV, T]) Apply(c context.Context, ms []flow.Message
 	allTasks := []task.Message[[]byte]{}
 
 	for _, m := range ms {
-		formattedMessage, unmarshalError := flow.Convert(m, format.Bytes(), format.Bytes(), r.ik, r.iv)
+		formattedMessage, unmarshalError := flow.Convert(m, format.Bytes(), format.Bytes(), r.inputTopic.KeyFormat(), r.inputTopic.ValueFormat())
 		if unmarshalError != nil {
 			return flow.EmptySlice(), unmarshalError
 		}
@@ -99,16 +85,17 @@ func (r *TaskFlow[IK, IV, OK, OV, T]) Apply(c context.Context, ms []flow.Message
 			return flow.EmptySlice(), nextErr
 		}
 
-		taskBytes, taskConversionError := task.Convert(nextTask, r.t, format.Bytes())
+		taskBytes, taskConversionError := task.Convert(nextTask, r.taskChannel.ValueFormat(), format.Bytes())
 		if taskConversionError != nil {
 			return flow.EmptySlice(), taskConversionError
 		}
 		allTasks = append(allTasks, taskBytes)
 
-		bytesResMessage, marshalError := flow.Convert(nextMessage, r.ok, r.ov, format.Bytes(), format.Bytes())
+		bytesResMessage, marshalError := flow.Convert(nextMessage, r.outputTopic.KeyFormat(), r.outputTopic.ValueFormat(), format.Bytes(), format.Bytes())
 		if marshalError != nil {
 			return flow.EmptySlice(), marshalError
 		}
+		bytesResMessage.Topic = r.outputTopic.Name()
 		byteResultMessages = append(byteResultMessages, bytesResMessage)
 	}
 

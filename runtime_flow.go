@@ -21,7 +21,7 @@ type FlowConfiguration[IK any, IV any, OK any, OV any, T any] struct {
 	InputTopic                  flow.Topic[IK, IV]
 	OutputTopic                 flow.Topic[OK, OV]
 	TaskChannel                 task.Channel[T]
-	Function                    task.FlowFunction[IK, IV, OK, OV, T]
+	Function                    task_flow.FlowFunction[IK, IV, OK, OV, T]
 	InputBroker                 string
 	OutputBroker                string
 	TaskConnectionString        string
@@ -82,11 +82,9 @@ func (c FlowConfiguration[IK, IV, OK, OV, T]) Register() {
 		wrappedBatch := task_flow.NewTaskFlow[IK, IV, OK, OV, T](
 			task_flow.WithFlowFunction[IK, IV, OK, OV, T](c.Function),
 			task_flow.WithProducer[IK, IV, OK, OV, T](taskProducer),
-			task_flow.WithInputKeyFormat[IK, IV, OK, OV, T](c.InputTopic.KeyFormat()),
-			task_flow.WithInputValueFormat[IK, IV, OK, OV, T](c.InputTopic.ValueFormat()),
-			task_flow.WithOutputKeyFormat[IK, IV, OK, OV, T](c.OutputTopic.KeyFormat()),
-			task_flow.WithOutputValueFormat[IK, IV, OK, OV, T](c.OutputTopic.ValueFormat()),
-			task_flow.WithTaskValueFormat[IK, IV, OK, OV, T](c.TaskChannel.ValueFormat()),
+			task_flow.WithInputTopic[IK, IV, OK, OV, T](c.InputTopic),
+			task_flow.WithOutputTopic[IK, IV, OK, OV, T](c.OutputTopic),
+			task_flow.WithTaskChannel[IK, IV, OK, OV, T](c.TaskChannel),
 		)
 
 		wrappedBatch = stateless.NewProducerBatchFunction(
