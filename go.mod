@@ -3,8 +3,8 @@ module github.com/hjwalt/tasks
 go 1.20
 
 require (
-	github.com/hjwalt/flows v0.1.4
-	github.com/hjwalt/runway v0.0.26
+	github.com/hjwalt/flows v0.2.2
+	github.com/hjwalt/runway v0.0.28
 	github.com/rabbitmq/amqp091-go v1.8.1
 	go.uber.org/zap v1.25.0
 )

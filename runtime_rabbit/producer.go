@@ -5,11 +5,47 @@ import (
 	"errors"
 	"time"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 	"github.com/hjwalt/tasks/task"
 	"github.com/rabbitmq/amqp091-go"
 )
 
+// constructor
+var NewProducer = runtime.ConstructorFor[*Producer, task.Producer](
+	func() *Producer {
+		return &Producer{
+			QueueDurable: true,
+		}
+	},
+	func(hr *Producer) task.Producer {
+		return hr
+	},
+)
+
+// configuration
+func WithProducerConnectionString(connectionString string) runtime.Configuration[*Producer] {
+	return func(p *Producer) *Producer {
+		p.ConnectionString = connectionString
+		return p
+	}
+}
+
+func WithProducerQueueName(queueName string) runtime.Configuration[*Producer] {
+	return func(p *Producer) *Producer {
+		p.QueueName = queueName
+		return p
+	}
+}
+
+func WithProducerQueueDurable(durable bool) runtime.Configuration[*Producer] {
+	return func(p *Producer) *Producer {
+		p.QueueDurable = durable
+		return p
+	}
+}
+
+// implementation
 type Producer struct {
 	ConnectionString string // amqp://guest:guest@localhost:5672/
 	QueueName        string
@@ -33,6 +69,10 @@ func (p *Producer) Start() error {
 		p.channel = ch
 	}
 
+	if err := p.channel.Confirm(false); err != nil {
+		return errors.Join(err, ErrRabbitConfirmMode)
+	}
+
 	if q, err := p.channel.QueueDeclare(p.QueueName, p.QueueDurable, false, false, false, nil); err != nil {
 		return errors.Join(err, ErrRabbitQueue)
 	} else {
@@ -47,7 +87,7 @@ func (p *Producer) Stop() {
 	p.connection.Close()
 }
 
-func (p *Producer) Produce(c context.Context, t task.Task[message.Bytes]) error {
+func (p *Producer) Produce(c context.Context, t task.Message[structure.Bytes]) error {
 	ctx, cancel := context.WithTimeout(c, 5*time.Second)
 	defer cancel()
 
@@ -59,7 +99,7 @@ func (p *Producer) Produce(c context.Context, t task.Task[message.Bytes]) error 
 		amqp091.Publishing{
 			DeliveryMode: amqp091.Persistent,
 			Headers:      t.Headers,
-			ContentType:  "application/octed-stream",
+			ContentType:  "application/octet-stream",
 			Body:         t.Value,
 		},
 	)
@@ -85,4 +125,5 @@ var (
 	ErrRabbitQueue               = errors.New("rabbitmq queue declaration failed")
 	ErrRabbitProduce             = errors.New("rabbitmq producing")
 	ErrRabbitProduceNotConfirmed = errors.New("rabbitmq produce not confirmed")
+	ErrRabbitConfirmMode         = errors.New("rabbitmq channel confirm mode failed")
 )

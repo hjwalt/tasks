@@ -25,6 +25,11 @@ update:
 
 # --------------------
 
+run:
+	./script/run.sh
+
+# --------------------
+
 proto: RUN
 	rm -rf $$GOPATH/$(MODULE)/ ;\
 	protoc -I=. --go_out=$$GOPATH **/*.proto ;\

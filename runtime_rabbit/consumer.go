@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/structure"
 	"github.com/hjwalt/tasks/task"
 	"github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
@@ -34,6 +34,10 @@ func (r *Consumer) Start() error {
 		return errors.Join(err, ErrRabbitChannel)
 	} else {
 		r.channel = ch
+	}
+
+	if err := r.channel.Confirm(false); err != nil {
+		return errors.Join(err, ErrRabbitConfirmMode)
 	}
 
 	if err := r.channel.Qos(1, 0, false); err != nil {
@@ -76,7 +80,7 @@ func (r *Consumer) Loop(ctx context.Context, cancel context.CancelFunc) error {
 		return nil
 	}
 
-	t := task.Task[message.Bytes]{
+	t := task.Message[structure.Bytes]{
 		Value:     m.Body,
 		Headers:   m.Headers,
 		Timestamp: m.Timestamp,
