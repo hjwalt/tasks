@@ -65,7 +65,7 @@ type Consumer struct {
 }
 
 func (r *Consumer) Start() error {
-	if conn, err := amqp091.Dial("amqp://guest:guest@localhost:5672/"); err != nil {
+	if conn, err := amqp091.Dial(r.ConnectionString); err != nil {
 		return errors.Join(err, ErrRabbitConnection)
 	} else {
 		r.connection = conn

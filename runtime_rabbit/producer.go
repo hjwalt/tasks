@@ -57,7 +57,7 @@ type Producer struct {
 }
 
 func (p *Producer) Start() error {
-	if conn, err := amqp091.Dial("amqp://guest:guest@localhost:5672/"); err != nil {
+	if conn, err := amqp091.Dial(p.ConnectionString); err != nil {
 		return errors.Join(err, ErrRabbitConnection)
 	} else {
 		p.connection = conn
