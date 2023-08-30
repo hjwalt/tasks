@@ -8,7 +8,6 @@ import (
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/tasks"
-	"github.com/hjwalt/tasks/runtime_rabbit"
 	"github.com/hjwalt/tasks/task"
 	"go.uber.org/zap"
 )
@@ -38,9 +37,6 @@ func instance() runtime.Runtime {
 		OutputBroker:         "localhost:9092",
 		TaskConnectionString: "amqp://guest:guest@localhost:5672/",
 		HttpPort:             8082,
-		RabbitProducerConfiguration: []runtime.Configuration[*runtime_rabbit.Producer]{
-			runtime_rabbit.WithProducerQueueDurable(false),
-		},
 	}
 	return r.Runtime()
 }

@@ -89,6 +89,7 @@ func (r *TaskFlow[IK, IV, OK, OV, T]) Apply(c context.Context, ms []flow.Message
 		if taskConversionError != nil {
 			return flow.EmptySlice(), taskConversionError
 		}
+		taskBytes.Channel = r.taskChannel.Name()
 		allTasks = append(allTasks, taskBytes)
 
 		bytesResMessage, marshalError := flow.Convert(nextMessage, r.outputTopic.KeyFormat(), r.outputTopic.ValueFormat(), format.Bytes(), format.Bytes())

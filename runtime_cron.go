@@ -36,7 +36,6 @@ func (c CronConfiguration[OK, OV, T]) Register() {
 	)
 	RegisterProducerConfig(
 		runtime_rabbit.WithProducerName(c.Name),
-		runtime_rabbit.WithProducerQueueName(c.TaskChannel.Name()),
 		runtime_rabbit.WithProducerConnectionString(c.TaskConnectionString),
 	)
 	RegisterProducerConfig(c.RabbitProducerConfiguration...)

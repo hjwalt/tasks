@@ -32,12 +32,14 @@ func (j *Job[OK, OV, T]) Run() {
 		logger.ErrorErr("scheduler failed to convert flow message", mberr)
 		return
 	}
+	mb.Topic = j.topic.Name()
 
 	tb, tberr := task.Convert(t, j.channel.ValueFormat(), format.Bytes())
 	if tberr != nil {
 		logger.ErrorErr("scheduler failed to convert task message", tberr)
 		return
 	}
+	tb.Channel = j.channel.Name()
 
 	taskProduceErr := j.taskProducer.Produce(ctx, tb)
 	if taskProduceErr != nil {

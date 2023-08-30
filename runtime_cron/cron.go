@@ -8,7 +8,6 @@ import (
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/tasks/task"
 	"github.com/robfig/cron/v3"
-	"go.uber.org/zap"
 )
 
 // constructor
@@ -48,13 +47,16 @@ func WithCronJob[OK any, OV any, T any](
 	channel task.Channel[T],
 ) runtime.Configuration[*Cron] {
 	return func(c *Cron) *Cron {
-		c.cron.AddJob(schedule, &Job[OK, OV, T]{
-			flowProducer: c.flowProducer,
-			taskProducer: c.taskProducer,
-			scheduler:    scheduler,
-			topic:        topic,
-			channel:      channel,
-		})
+		c.cron.AddJob(
+			schedule,
+			&Job[OK, OV, T]{
+				flowProducer: c.flowProducer,
+				taskProducer: c.taskProducer,
+				scheduler:    scheduler,
+				topic:        topic,
+				channel:      channel,
+			},
+		)
 		return c
 	}
 }
@@ -67,10 +69,8 @@ type Cron struct {
 }
 
 func (c *Cron) Start() error {
-	c.cron.Start()
 	logger.Info("cron starting")
-
-	logger.Info("entries", zap.Any("entries", c.cron.Entries()))
+	c.cron.Start()
 	return nil
 }
 

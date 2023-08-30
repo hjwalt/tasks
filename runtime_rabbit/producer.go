@@ -15,8 +15,7 @@ import (
 var NewProducer = runtime.ConstructorFor[*Producer, task.Producer](
 	func() *Producer {
 		return &Producer{
-			Name:         "tasks",
-			QueueDurable: true,
+			Name: "tasks",
 		}
 	},
 	func(hr *Producer) task.Producer {
@@ -39,30 +38,13 @@ func WithProducerConnectionString(connectionString string) runtime.Configuration
 	}
 }
 
-func WithProducerQueueName(queueName string) runtime.Configuration[*Producer] {
-	return func(p *Producer) *Producer {
-		p.QueueName = queueName
-		return p
-	}
-}
-
-func WithProducerQueueDurable(durable bool) runtime.Configuration[*Producer] {
-	return func(p *Producer) *Producer {
-		p.QueueDurable = durable
-		return p
-	}
-}
-
 // implementation
 type Producer struct {
 	Name             string
 	ConnectionString string // amqp://guest:guest@localhost:5672/
-	QueueName        string
-	QueueDurable     bool
 
 	connection *amqp091.Connection
 	channel    *amqp091.Channel
-	queue      *amqp091.Queue
 }
 
 func (p *Producer) Start() error {
@@ -90,12 +72,6 @@ func (p *Producer) Start() error {
 		return errors.Join(err, ErrRabbitConfirmMode)
 	}
 
-	if q, err := p.channel.QueueDeclare(p.QueueName, p.QueueDurable, false, false, false, nil); err != nil {
-		return errors.Join(err, ErrRabbitQueue)
-	} else {
-		p.queue = &q
-	}
-
 	return nil
 }
 
@@ -109,10 +85,10 @@ func (p *Producer) Produce(c context.Context, t task.Message[structure.Bytes]) e
 	defer cancel()
 
 	confirm, err := p.channel.PublishWithDeferredConfirmWithContext(ctx,
-		"",           // exchange
-		p.queue.Name, // routing key
-		false,        // mandatory
-		false,        // immediate
+		"",        // exchange
+		t.Channel, // routing key
+		false,     // mandatory
+		false,     // immediate
 		amqp091.Publishing{
 			DeliveryMode: amqp091.Persistent,
 			Headers:      t.Headers,

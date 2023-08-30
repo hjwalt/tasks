@@ -140,6 +140,7 @@ func (r *Consumer) Loop(ctx context.Context, cancel context.CancelFunc) error {
 	}
 
 	t := task.Message[structure.Bytes]{
+		Channel:   r.queue.Name,
 		Value:     m.Body,
 		Headers:   m.Headers,
 		Timestamp: m.Timestamp,
