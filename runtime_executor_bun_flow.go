@@ -14,6 +14,7 @@ import (
 	"github.com/hjwalt/tasks/runtime_rabbit"
 	"github.com/hjwalt/tasks/task"
 	"github.com/hjwalt/tasks/task_executor_bun_flow"
+	"github.com/hjwalt/tasks/task_executor_retry"
 )
 
 type ExecutorBunFlowConfiguration[OK any, OV any, T any] struct {
@@ -61,6 +62,10 @@ func (c ExecutorBunFlowConfiguration[OK, OV, T]) Register() {
 	flows.RegisterRoute()
 
 	RegisterConsumerExecutor(func(ctx context.Context) (task.Executor[structure.Bytes], error) {
+		retry, err := flows.GetRetry(ctx)
+		if err != nil {
+			return nil, err
+		}
 		bunConnection, err := flows.GetPostgresqlConnection(ctx)
 		if err != nil {
 			return nil, err
@@ -77,6 +82,12 @@ func (c ExecutorBunFlowConfiguration[OK, OV, T]) Register() {
 			task_executor_bun_flow.WithOutputTopic[OK, OV, T](c.OutputTopic),
 			task_executor_bun_flow.WithTaskChannel[OK, OV, T](c.TaskChannel),
 		)
+
+		executor = task_executor_retry.New(
+			task_executor_retry.WithRetry(retry),
+			task_executor_retry.WithExecutor(executor),
+		)
+
 		return executor, nil
 	})
 }

@@ -1,0 +1,63 @@
+package task_executor_retry
+
+import (
+	"context"
+	"errors"
+
+	"github.com/hjwalt/flows/runtime_retry"
+	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
+	"github.com/hjwalt/tasks/task"
+	"go.uber.org/zap"
+)
+
+// constructor
+var New = runtime.ConstructorFor[*TaskRetry, task.Executor[structure.Bytes]](
+	func() *TaskRetry {
+		return &TaskRetry{}
+	},
+	func(hr *TaskRetry) task.Executor[structure.Bytes] {
+		return hr.Apply
+	},
+)
+
+// configurations
+func WithRetry(r *runtime_retry.Retry) runtime.Configuration[*TaskRetry] {
+	return func(p *TaskRetry) *TaskRetry {
+		p.retry = r
+		return p
+	}
+}
+
+func WithExecutor(e task.Executor[structure.Bytes]) runtime.Configuration[*TaskRetry] {
+	return func(p *TaskRetry) *TaskRetry {
+		p.executor = e
+		return p
+	}
+}
+
+// implementation
+type TaskRetry struct {
+	retry    *runtime_retry.Retry
+	executor task.Executor[structure.Bytes]
+}
+
+func (r *TaskRetry) Apply(c context.Context, t task.Message[structure.Bytes]) error {
+	retryErr := r.retry.Do(func(tryCount int64) error {
+		err := r.executor(runtime_retry.SetTryCount(c, tryCount), t)
+		if err != nil {
+			logger.Warn("retrying", zap.Int64("try", tryCount), zap.Error(err))
+			return err
+		}
+		return nil
+	})
+
+	if retryErr != nil {
+		return errors.Join(ErrorRetryAttempt, retryErr)
+	} else {
+		return nil
+	}
+}
+
+var ErrorRetryAttempt = errors.New("retry all attempts failed")

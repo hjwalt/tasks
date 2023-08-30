@@ -6,7 +6,9 @@ require (
 	github.com/hjwalt/flows v0.2.3
 	github.com/hjwalt/runway v0.0.28
 	github.com/rabbitmq/amqp091-go v1.8.1
+	github.com/robfig/cron/v3 v3.0.0
 	go.uber.org/zap v1.25.0
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
@@ -53,7 +55,6 @@ require (
 	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )
