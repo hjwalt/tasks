@@ -34,33 +34,6 @@ type ExecutorBunFlowConfiguration[OK any, OV any, T any] struct {
 }
 
 func (c ExecutorBunFlowConfiguration[OK, OV, T]) Register() {
-	flows.RegisterPostgresqlConfig(
-		runtime_bun.WithApplicationName(c.Name),
-		runtime_bun.WithConnectionString(c.PostgresConnectionString),
-	)
-	flows.RegisterProducerConfig(
-		runtime_sarama.WithProducerBroker(c.OutputBroker),
-	)
-	flows.RegisterRouteConfig(
-		runtime_bunrouter.WithRouterPort(c.HttpPort),
-	)
-	RegisterConsumerConfig(
-		runtime_rabbit.WithConsumerName(c.Name),
-		runtime_rabbit.WithConsumerQueueName(c.TaskChannel.Name()),
-		runtime_rabbit.WithConsumerConnectionString(c.TaskConnectionString),
-	)
-
-	flows.RegisterPostgresqlConfig(c.PostgresqlConfiguration...)
-	flows.RegisterPostgresql()
-	flows.RegisterRetry(c.RetryConfiguration)
-	flows.RegisterProducerConfig(c.KafkaProducerConfiguration...)
-	flows.RegisterProducer()
-	RegisterConsumerConfig(c.RabbitConsumerConfiguration...)
-	RegisterConsumer()
-	flows.RegisterRouteConfigDefault()
-	flows.RegisterRouteConfig(c.RouteConfiguration...)
-	flows.RegisterRoute()
-
 	RegisterConsumerExecutor(func(ctx context.Context) (task.Executor[structure.Bytes], error) {
 		retry, err := flows.GetRetry(ctx)
 		if err != nil {
@@ -92,7 +65,34 @@ func (c ExecutorBunFlowConfiguration[OK, OV, T]) Register() {
 	})
 }
 
+func (c ExecutorBunFlowConfiguration[OK, OV, T]) RegisterRuntime() {
+	flows.RegisterPostgresql(
+		c.Name,
+		c.PostgresConnectionString,
+		c.PostgresqlConfiguration,
+	)
+	flows.RegisterRetry(
+		c.RetryConfiguration,
+	)
+	flows.RegisterProducer(
+		c.OutputBroker,
+		c.KafkaProducerConfiguration,
+	)
+	flows.RegisterRoute(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
+	RegisterConsumerConfig(
+		runtime_rabbit.WithConsumerName(c.Name),
+		runtime_rabbit.WithConsumerQueueName(c.TaskChannel.Name()),
+		runtime_rabbit.WithConsumerConnectionString(c.TaskConnectionString),
+	)
+	RegisterConsumerConfig(c.RabbitConsumerConfiguration...)
+	RegisterConsumer()
+}
+
 func (c ExecutorBunFlowConfiguration[OK, OV, T]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &flows.RuntimeFacade{

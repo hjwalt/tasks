@@ -28,7 +28,7 @@ func instance() runtime.Runtime {
 	r := tasks.CronConfiguration[string, string, string]{
 		Name:        Instance,
 		OutputTopic: flow.StringTopic("cron-scheduled"),
-		TaskChannel: task.StringChannel("cron"),
+		TaskChannel: task.StringChannel("tasks"),
 		Scheduler:   fn,
 		Schedules: []string{
 			"0 * * * * *",

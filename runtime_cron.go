@@ -28,11 +28,14 @@ type CronConfiguration[OK any, OV any, T any] struct {
 }
 
 func (c CronConfiguration[OK, OV, T]) Register() {
-	flows.RegisterProducerConfig(
-		runtime_sarama.WithProducerBroker(c.OutputBroker),
-	)
-	flows.RegisterRouteConfig(
-		runtime_bunrouter.WithRouterPort(c.HttpPort),
+	for _, schedule := range c.Schedules {
+		RegisterCronConfig(runtime_cron.WithCronJob(schedule, c.Scheduler, c.OutputTopic, c.TaskChannel))
+	}
+}
+
+func (c CronConfiguration[OK, OV, T]) RegisterRuntime() {
+	flows.RegisterRetry(
+		c.RetryConfiguration,
 	)
 	RegisterProducerConfig(
 		runtime_rabbit.WithProducerName(c.Name),
@@ -40,20 +43,20 @@ func (c CronConfiguration[OK, OV, T]) Register() {
 	)
 	RegisterProducerConfig(c.RabbitProducerConfiguration...)
 	RegisterProducer()
-	flows.RegisterRetry(c.RetryConfiguration)
-	flows.RegisterProducerConfig(c.KafkaProducerConfiguration...)
-	flows.RegisterProducer()
-	flows.RegisterRouteConfigDefault()
-	flows.RegisterRouteConfig(c.RouteConfiguration...)
-	flows.RegisterRoute()
+	flows.RegisterProducer(
+		c.OutputBroker,
+		c.KafkaProducerConfiguration,
+	)
+	flows.RegisterRoute(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
 	RegisterCronConfigDefault()
-	for _, schedule := range c.Schedules {
-		RegisterCronConfig(runtime_cron.WithCronJob(schedule, c.Scheduler, c.OutputTopic, c.TaskChannel))
-	}
 	RegisterCron()
 }
 
 func (c CronConfiguration[OK, OV, T]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &flows.RuntimeFacade{

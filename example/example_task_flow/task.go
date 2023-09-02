@@ -32,7 +32,7 @@ func instance() runtime.Runtime {
 		Function:             fn,
 		InputTopic:           flow.StringTopic("word"),
 		OutputTopic:          flow.StringTopic("word-updated"),
-		TaskChannel:          task.StringChannel("word"),
+		TaskChannel:          task.StringChannel("tasks"),
 		InputBroker:          "localhost:9092",
 		OutputBroker:         "localhost:9092",
 		TaskConnectionString: "amqp://guest:guest@localhost:5672/",

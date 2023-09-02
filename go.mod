@@ -3,7 +3,7 @@ module github.com/hjwalt/tasks
 go 1.20
 
 require (
-	github.com/hjwalt/flows v0.2.3
+	github.com/hjwalt/flows v0.2.5
 	github.com/hjwalt/runway v0.0.28
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/robfig/cron/v3 v3.0.0

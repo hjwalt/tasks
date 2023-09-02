@@ -26,11 +26,11 @@ func fn(c context.Context, t task.Message[string], bun runtime_bun.BunConnection
 func instance() runtime.Runtime {
 	r := tasks.ExecutorBunFlowConfiguration[string, string, string]{
 		Name:                     Instance,
-		TaskChannel:              task.StringChannel("word"),
+		TaskChannel:              task.StringChannel("tasks"),
 		Executor:                 fn,
 		OutputTopic:              flow.StringTopic("word-updated"),
 		OutputBroker:             "localhost:9092",
-		TaskConnectionString:     "amqp://rabbit:rabbit@localhost:5672/",
+		TaskConnectionString:     "amqp://guest:guest@localhost:5672/",
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 		HttpPort:                 8081,
 		RabbitConsumerConfiguration: []runtime.Configuration[*runtime_rabbit.Consumer]{

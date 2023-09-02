@@ -15,7 +15,7 @@ func main() {
 	example_task_flow.Register(m)
 	example_task_executor.Register(m)
 
-	err := m.Start(environment.GetString("INSTANCE", example_task_cron.Instance))
+	err := m.Start(environment.GetString("INSTANCE", example_task_executor.Instance))
 
 	if err != nil {
 		panic(err)
