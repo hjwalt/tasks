@@ -10,40 +10,53 @@ import (
 )
 
 const (
-	QualifierCronConfiguration = "QualifierCronConfiguration"
-	QualifierCron              = "QualifierCron"
+	QualifierCron = "QualifierCron"
 )
 
-func RegisterCronConfigDefault() {
-	inverse.Register(QualifierCronConfiguration, InjectorCronFlowProducer)
-	inverse.Register(QualifierCronConfiguration, InjectorCronTaskProducer)
-}
+func RegisterCron(
+	container inverse.Container,
+	configs []runtime.Configuration[*runtime_cron.Cron],
+) {
 
-func RegisterCronConfig(config runtime.Configuration[*runtime_cron.Cron]) {
-	inverse.RegisterInstance(QualifierCronConfiguration, config)
-}
-
-func RegisterCron() {
-	inverse.RegisterWithConfigurationRequired(
+	resolver := runtime.NewResolver[*runtime_cron.Cron, runtime.Runtime](
 		QualifierCron,
-		QualifierCronConfiguration,
+		container,
+		true,
 		runtime_cron.NewCron,
 	)
-	inverse.Register(flows.QualifierRuntime, flows.InjectorRuntime(QualifierCron))
+
+	resolver.AddConfig(ResolveCronConfigFlowProducer)
+	resolver.AddConfig(ResolveCronConfigTaskProducer)
+
+	for _, config := range configs {
+		resolver.AddConfigVal(config)
+	}
+
+	resolver.Register()
+
+	flows.RegisterRuntime(QualifierCron, container)
 }
 
-func InjectorCronFlowProducer(ctx context.Context) (runtime.Configuration[*runtime_cron.Cron], error) {
-	handler, getHandlerError := flows.GetKafkaProducer(ctx)
+func ResolveCronConfigFlowProducer(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_cron.Cron], error) {
+	handler, getHandlerError := flows.GetKafkaProducer(ctx, ci)
 	if getHandlerError != nil {
 		return nil, getHandlerError
 	}
 	return runtime_cron.WithFlowProducer(handler), nil
 }
 
-func InjectorCronTaskProducer(ctx context.Context) (runtime.Configuration[*runtime_cron.Cron], error) {
-	handler, getHandlerError := GetRabbitProducer(ctx)
+func ResolveCronConfigTaskProducer(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_cron.Cron], error) {
+	handler, getHandlerError := GetRabbitProducer(ctx, ci)
 	if getHandlerError != nil {
 		return nil, getHandlerError
 	}
 	return runtime_cron.WithTaskProducer(handler), nil
+}
+
+// ===================================
+
+func RegisterCronConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_cron.Cron]) {
+	for _, config := range configs {
+		ci.AddVal(runtime.QualifierConfig(QualifierCron), config)
+	}
 }

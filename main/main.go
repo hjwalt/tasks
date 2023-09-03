@@ -11,11 +11,11 @@ import (
 func main() {
 	m := flows.NewMain()
 
+	example_task_executor.Register(m)
 	example_task_cron.Register(m)
 	example_task_flow.Register(m)
-	example_task_executor.Register(m)
 
-	err := m.Start(environment.GetString("INSTANCE", example_task_executor.Instance))
+	err := m.Start(environment.GetString("INSTANCE", flows.AllInstances))
 
 	if err != nil {
 		panic(err)

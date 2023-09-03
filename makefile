@@ -37,4 +37,12 @@ proto: RUN
 
 # --------------------
 
+up: RUN
+	podman-compose up -d
+
+down: RUN
+	podman-compose down
+
+# --------------------
+
 RUN:

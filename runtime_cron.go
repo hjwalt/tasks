@@ -6,6 +6,7 @@ import (
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/tasks/runtime_cron"
 	"github.com/hjwalt/tasks/runtime_rabbit"
@@ -27,39 +28,36 @@ type CronConfiguration[OK any, OV any, T any] struct {
 	RouteConfiguration          []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c CronConfiguration[OK, OV, T]) Register() {
-	for _, schedule := range c.Schedules {
-		RegisterCronConfig(runtime_cron.WithCronJob(schedule, c.Scheduler, c.OutputTopic, c.TaskChannel))
-	}
-}
-
-func (c CronConfiguration[OK, OV, T]) RegisterRuntime() {
+func (c CronConfiguration[OK, OV, T]) Register(ci inverse.Container) {
 	flows.RegisterRetry(
+		ci,
 		c.RetryConfiguration,
 	)
-	RegisterProducerConfig(
-		runtime_rabbit.WithProducerName(c.Name),
-		runtime_rabbit.WithProducerConnectionString(c.TaskConnectionString),
+	RegisterProducer(
+		ci,
+		c.Name,
+		c.TaskConnectionString,
+		c.RabbitProducerConfiguration,
 	)
-	RegisterProducerConfig(c.RabbitProducerConfiguration...)
-	RegisterProducer()
 	flows.RegisterProducer(
+		ci,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
 	flows.RegisterRoute(
+		ci,
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
-	RegisterCronConfigDefault()
-	RegisterCron()
-}
+	RegisterCron(
+		ci,
+		[]runtime.Configuration[*runtime_cron.Cron]{},
+	)
 
-func (c CronConfiguration[OK, OV, T]) Runtime() runtime.Runtime {
-	c.RegisterRuntime()
-	c.Register()
+	// ADDING CRON AFTER CONFIG
+	// Moving this above the cron config will result in NPE
 
-	return &flows.RuntimeFacade{
-		Runtimes: flows.InjectedRuntimes(),
+	for _, schedule := range c.Schedules {
+		RegisterCronConfig(ci, runtime_cron.WithCronJob(schedule, c.Scheduler, c.OutputTopic, c.TaskChannel))
 	}
 }

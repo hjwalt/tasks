@@ -5,8 +5,8 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/logger"
-	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/tasks"
 	"github.com/hjwalt/tasks/task"
 	"go.uber.org/zap"
@@ -26,8 +26,8 @@ func fn(c context.Context, m flow.Message[string, string]) (task.Message[string]
 		}, nil
 }
 
-func instance() runtime.Runtime {
-	r := tasks.FlowConfiguration[string, string, string, string, string]{
+func Registrar(ci inverse.Container) flows.Prebuilt {
+	return tasks.FlowConfiguration[string, string, string, string, string]{
 		Name:                 Instance,
 		Function:             fn,
 		InputTopic:           flow.StringTopic("word"),
@@ -38,7 +38,6 @@ func instance() runtime.Runtime {
 		TaskConnectionString: "amqp://guest:guest@localhost:5672/",
 		HttpPort:             8082,
 	}
-	return r.Runtime()
 }
 
 const (
@@ -46,8 +45,5 @@ const (
 )
 
 func Register(m flows.Main) {
-	err := m.Register(Instance, instance)
-	if err != nil {
-		panic(err)
-	}
+	m.Prebuilt(Instance, Registrar)
 }

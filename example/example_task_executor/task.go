@@ -6,6 +6,7 @@ import (
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_bun"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/tasks"
@@ -23,8 +24,8 @@ func fn(c context.Context, t task.Message[string], bun runtime_bun.BunConnection
 	}, nil
 }
 
-func instance() runtime.Runtime {
-	r := tasks.ExecutorBunFlowConfiguration[string, string, string]{
+func Registrar(ci inverse.Container) flows.Prebuilt {
+	return tasks.ExecutorBunFlowConfiguration[string, string, string]{
 		Name:                     Instance,
 		TaskChannel:              task.StringChannel("tasks"),
 		Executor:                 fn,
@@ -37,7 +38,6 @@ func instance() runtime.Runtime {
 			runtime_rabbit.WithConsumerQueueDurable(false),
 		},
 	}
-	return r.Runtime()
 }
 
 const (
@@ -45,8 +45,5 @@ const (
 )
 
 func Register(m flows.Main) {
-	err := m.Register(Instance, instance)
-	if err != nil {
-		panic(err)
-	}
+	m.Prebuilt(Instance, Registrar)
 }

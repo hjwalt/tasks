@@ -3,8 +3,8 @@ module github.com/hjwalt/tasks
 go 1.20
 
 require (
-	github.com/hjwalt/flows v0.2.5
-	github.com/hjwalt/runway v0.0.28
+	github.com/hjwalt/flows v0.2.7
+	github.com/hjwalt/runway v0.1.2
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/robfig/cron/v3 v3.0.0
 	go.uber.org/zap v1.25.0
@@ -54,7 +54,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )
