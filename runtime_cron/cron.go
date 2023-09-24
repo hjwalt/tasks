@@ -69,12 +69,12 @@ type Cron struct {
 }
 
 func (c *Cron) Start() error {
-	logger.Info("cron starting")
+	logger.Debug("cron starting")
 	c.cron.Start()
 	return nil
 }
 
 func (c *Cron) Stop() {
-	logger.Info("cron stopping")
+	logger.Debug("cron stopping")
 	c.cron.Stop()
 }
