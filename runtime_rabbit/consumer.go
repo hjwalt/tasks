@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
 	"github.com/hjwalt/tasks/task"
@@ -83,6 +84,8 @@ func (r *Consumer) Start() error {
 		},
 	}
 
+	logger.Debug("rabbit consumer starting")
+
 	if conn, err := amqp091.DialConfig(r.ConnectionString, config); err != nil {
 		return errors.Join(err, ErrRabbitConnection)
 	} else {
@@ -123,12 +126,16 @@ func (r *Consumer) Start() error {
 		r.messages = msgs
 	}
 
+	logger.Debug("rabbit consumer started")
+
 	return nil
 }
 
 func (r *Consumer) Stop() {
+	logger.Debug("rabbit consumer stopping")
 	r.channel.Close()
 	r.connection.Close()
+	logger.Debug("rabbit consumer stopped")
 }
 
 func (r *Consumer) Loop(ctx context.Context, cancel context.CancelFunc) error {

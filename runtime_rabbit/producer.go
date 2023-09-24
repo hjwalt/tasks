@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
 	"github.com/hjwalt/tasks/task"
@@ -56,6 +57,8 @@ func (p *Producer) Start() error {
 		},
 	}
 
+	logger.Debug("rabbit producer starting")
+
 	if conn, err := amqp091.DialConfig(p.ConnectionString, config); err != nil {
 		return errors.Join(err, ErrRabbitConnection)
 	} else {
@@ -72,12 +75,18 @@ func (p *Producer) Start() error {
 		return errors.Join(err, ErrRabbitConfirmMode)
 	}
 
+	logger.Debug("rabbit producer started")
+
 	return nil
 }
 
 func (p *Producer) Stop() {
+	logger.Debug("rabbit producer stoppping")
+
 	p.channel.Close()
 	p.connection.Close()
+
+	logger.Debug("rabbit producer stopped")
 }
 
 func (p *Producer) Produce(c context.Context, t task.Message[structure.Bytes]) error {
