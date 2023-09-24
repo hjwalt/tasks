@@ -11,7 +11,7 @@ import (
 	"github.com/hjwalt/tasks/task"
 )
 
-type FlowFunction[IK any, IV any, OK any, OV any, T any] func(context.Context, flow.Message[IK, IV]) (task.Message[T], flow.Message[OK, OV], error)
+type FlowFunction[IK any, IV any, OK any, OV any, T any] func(context.Context, flow.Message[IK, IV]) (*task.Message[T], *flow.Message[OK, OV], error)
 
 // constructor
 func NewTaskFlow[IK any, IV any, OK any, OV any, T any](c ...runtime.Configuration[*TaskFlow[IK, IV, OK, OV, T]]) stateless.BatchFunction {
@@ -85,19 +85,23 @@ func (r *TaskFlow[IK, IV, OK, OV, T]) Apply(c context.Context, ms []flow.Message
 			return flow.EmptySlice(), nextErr
 		}
 
-		taskBytes, taskConversionError := task.Convert(nextTask, r.taskChannel.ValueFormat(), format.Bytes())
-		if taskConversionError != nil {
-			return flow.EmptySlice(), taskConversionError
+		if nextTask != nil {
+			taskBytes, taskConversionError := task.Convert(*nextTask, r.taskChannel.ValueFormat(), format.Bytes())
+			if taskConversionError != nil {
+				return flow.EmptySlice(), taskConversionError
+			}
+			taskBytes.Channel = r.taskChannel.Name()
+			allTasks = append(allTasks, taskBytes)
 		}
-		taskBytes.Channel = r.taskChannel.Name()
-		allTasks = append(allTasks, taskBytes)
 
-		bytesResMessage, marshalError := flow.Convert(nextMessage, r.outputTopic.KeyFormat(), r.outputTopic.ValueFormat(), format.Bytes(), format.Bytes())
-		if marshalError != nil {
-			return flow.EmptySlice(), marshalError
+		if nextMessage != nil {
+			bytesResMessage, marshalError := flow.Convert(*nextMessage, r.outputTopic.KeyFormat(), r.outputTopic.ValueFormat(), format.Bytes(), format.Bytes())
+			if marshalError != nil {
+				return flow.EmptySlice(), marshalError
+			}
+			bytesResMessage.Topic = r.outputTopic.Name()
+			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
-		bytesResMessage.Topic = r.outputTopic.Name()
-		byteResultMessages = append(byteResultMessages, bytesResMessage)
 	}
 
 	// isolating produce errors

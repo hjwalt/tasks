@@ -12,13 +12,13 @@ import (
 	"go.uber.org/zap"
 )
 
-func fn(c context.Context, m flow.Message[string, string]) (task.Message[string], flow.Message[string, string], error) {
+func fn(c context.Context, m flow.Message[string, string]) (*task.Message[string], *flow.Message[string, string], error) {
 
 	logger.Info("count", zap.String("remap", m.Value+" updated"), zap.String("key", m.Key))
-	return task.Message[string]{
+	return &task.Message[string]{
 			Value: m.Value,
 		},
-		flow.Message[string, string]{
+		&flow.Message[string, string]{
 			Topic:   "word-updated",
 			Key:     m.Key,
 			Value:   m.Value + " published",
