@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows"
-	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
@@ -15,25 +13,18 @@ import (
 	"go.uber.org/zap"
 )
 
-func fn(c context.Context, t task.Message[string], bun runtime_bun.BunConnection, flowProducer flow.Producer) (flow.Message[string, string], error) {
+func fn(c context.Context, t task.Message[string]) error {
 	logger.Info("handling", zap.String("body", t.Value))
-	return flow.Message[string, string]{
-		Topic: "word-updated",
-		Key:   t.Value,
-		Value: t.Value + " completed",
-	}, nil
+	return nil
 }
 
 func Registrar(ci inverse.Container) flows.Prebuilt {
-	return tasks.ExecutorBunFlowConfiguration[string, string, string]{
-		Name:                     Instance,
-		TaskChannel:              task.StringChannel("tasks"),
-		Executor:                 fn,
-		OutputTopic:              flow.StringTopic("word-updated"),
-		OutputBroker:             "localhost:9092",
-		TaskConnectionString:     "amqp://guest:guest@localhost:5672/",
-		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
-		HttpPort:                 8081,
+	return tasks.ExecutorConfiguration[string]{
+		Name:                 Instance,
+		TaskChannel:          task.StringChannel("tasks"),
+		TaskExecutor:         fn,
+		TaskConnectionString: "amqp://guest:guest@localhost:5672/",
+		HttpPort:             8081,
 		RabbitConsumerConfiguration: []runtime.Configuration[*runtime_rabbit.Consumer]{
 			runtime_rabbit.WithConsumerQueueDurable(false),
 		},
