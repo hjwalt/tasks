@@ -25,7 +25,6 @@ func RegisterCron(
 		runtime_cron.NewCron,
 	)
 
-	resolver.AddConfig(ResolveCronConfigFlowProducer)
 	resolver.AddConfig(ResolveCronConfigTaskProducer)
 
 	for _, config := range configs {
@@ -35,14 +34,6 @@ func RegisterCron(
 	resolver.Register()
 
 	flows.RegisterRuntime(QualifierCron, container)
-}
-
-func ResolveCronConfigFlowProducer(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_cron.Cron], error) {
-	handler, getHandlerError := flows.GetKafkaProducer(ctx, ci)
-	if getHandlerError != nil {
-		return nil, getHandlerError
-	}
-	return runtime_cron.WithFlowProducer(handler), nil
 }
 
 func ResolveCronConfigTaskProducer(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_cron.Cron], error) {

@@ -3,7 +3,6 @@ package runtime_cron
 import (
 	"time"
 
-	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/tasks/task"
@@ -26,12 +25,6 @@ var NewCron = runtime.ConstructorFor[*Cron, runtime.Runtime](
 )
 
 // configuration
-func WithFlowProducer(flowProducer flow.Producer) runtime.Configuration[*Cron] {
-	return func(c *Cron) *Cron {
-		c.flowProducer = flowProducer
-		return c
-	}
-}
 
 func WithTaskProducer(taskProducer task.Producer) runtime.Configuration[*Cron] {
 	return func(c *Cron) *Cron {
@@ -43,17 +36,14 @@ func WithTaskProducer(taskProducer task.Producer) runtime.Configuration[*Cron] {
 func WithCronJob[OK any, OV any, T any](
 	schedule string,
 	scheduler task.Scheduler[OK, OV, T],
-	topic flow.Topic[OK, OV],
 	channel task.Channel[T],
 ) runtime.Configuration[*Cron] {
 	return func(c *Cron) *Cron {
 		c.cron.AddJob(
 			schedule,
 			&Job[OK, OV, T]{
-				flowProducer: c.flowProducer,
 				taskProducer: c.taskProducer,
 				scheduler:    scheduler,
-				topic:        topic,
 				channel:      channel,
 			},
 		)
@@ -63,7 +53,6 @@ func WithCronJob[OK any, OV any, T any](
 
 // implementation
 type Cron struct {
-	flowProducer flow.Producer
 	taskProducer task.Producer
 	cron         *cron.Cron
 }
