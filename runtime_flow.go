@@ -5,7 +5,6 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
@@ -60,9 +59,6 @@ func (c FlowConfiguration[IK, IV, OK, OV, T]) Register(ci inverse.Container) {
 	)
 	flows.RegisterRouteConfig(
 		ci,
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
-		),
 	)
 
 	// RUNTIME
