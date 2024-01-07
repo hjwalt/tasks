@@ -10,19 +10,18 @@ import (
 )
 
 // constructor
-var NewCron = runtime.ConstructorFor[*Cron, runtime.Runtime](
-	func() *Cron {
-		return &Cron{
-			cron: cron.New(
-				cron.WithLocation(time.UTC),
-				cron.WithSeconds(),
-			),
-		}
-	},
-	func(hr *Cron) runtime.Runtime {
-		return hr
-	},
-)
+func NewCron(configurations ...runtime.Configuration[*Cron]) runtime.Runtime {
+	r := &Cron{
+		cron: cron.New(
+			cron.WithLocation(time.UTC),
+			cron.WithSeconds(),
+		),
+	}
+	for _, configuration := range configurations {
+		r = configuration(r)
+	}
+	return r
+}
 
 // configuration
 

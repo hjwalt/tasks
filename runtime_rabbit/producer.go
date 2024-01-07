@@ -13,16 +13,15 @@ import (
 )
 
 // constructor
-var NewProducer = runtime.ConstructorFor[*Producer, task.Producer](
-	func() *Producer {
-		return &Producer{
-			Name: "tasks",
-		}
-	},
-	func(hr *Producer) task.Producer {
-		return hr
-	},
-)
+func NewProducer(configurations ...runtime.Configuration[*Producer]) task.Producer {
+	r := &Producer{
+		Name: "tasks",
+	}
+	for _, configuration := range configurations {
+		r = configuration(r)
+	}
+	return r
+}
 
 // configuration
 func WithProducerName(name string) runtime.Configuration[*Producer] {

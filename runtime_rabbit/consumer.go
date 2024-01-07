@@ -13,17 +13,16 @@ import (
 )
 
 // constructor
-var NewConsumer = runtime.ConstructorFor[*Consumer, runtime.Runtime](
-	func() *Consumer {
-		return &Consumer{
-			Name:         "tasks",
-			QueueDurable: true,
-		}
-	},
-	func(hr *Consumer) runtime.Runtime {
-		return runtime.NewLoop(hr)
-	},
-)
+func NewConsumer(configurations ...runtime.Configuration[*Consumer]) runtime.Runtime {
+	loop := &Consumer{
+		Name:         "tasks",
+		QueueDurable: true,
+	}
+	for _, configuration := range configurations {
+		loop = configuration(loop)
+	}
+	return runtime.NewLoop(loop)
+}
 
 // configuration
 func WithConsumerName(name string) runtime.Configuration[*Consumer] {

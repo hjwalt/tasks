@@ -13,14 +13,13 @@ import (
 )
 
 // constructor
-var New = runtime.ConstructorFor[*TaskRetry, task.Executor[structure.Bytes]](
-	func() *TaskRetry {
-		return &TaskRetry{}
-	},
-	func(hr *TaskRetry) task.Executor[structure.Bytes] {
-		return hr.Apply
-	},
-)
+func New(configurations ...runtime.Configuration[*TaskRetry]) task.Executor[structure.Bytes] {
+	function := &TaskRetry{}
+	for _, configuration := range configurations {
+		function = configuration(function)
+	}
+	return function.Apply
+}
 
 // configurations
 func WithRetry(r *runtime_retry.Retry) runtime.Configuration[*TaskRetry] {
